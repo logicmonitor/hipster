@@ -174,7 +174,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - EXPORTER_ENDPOINT=https://lmadityabhairavkar.logicmonitor.com/rest/api
+      - EXPORTER_ENDPOINT="YOUR_EXPORTER_ENDPOINT"
       - EXPORT_TYPE=otlp
       - SERVICE_NAME=ADSERVICE
       - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
@@ -204,3 +204,4 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
 
 
+# For sending traces to localhost use endpoint http://host.docker.internal:4317
