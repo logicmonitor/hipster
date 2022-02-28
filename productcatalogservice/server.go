@@ -27,20 +27,21 @@ import (
 	"sync"
 	"syscall"
 	"time"
+    "net/url"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservice/genproto"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp"
-	"go.opentelemetry.io/otel/exporters/stdout"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	"go.opentelemetry.io/otel/label"
-	"go.opentelemetry.io/otel/propagation"
-	exporttrace "go.opentelemetry.io/otel/sdk/export/trace"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/propagation"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -86,62 +87,86 @@ func init() {
 }
 
 func detectResource() (*resource.Resource, error) {
-	var instID label.KeyValue
+	var instID attribute.KeyValue
 	if host, ok := os.LookupEnv("HOSTNAME"); ok && host != "" {
 		instID = semconv.ServiceInstanceIDKey.String(host)
 	} else {
 		instID = semconv.ServiceInstanceIDKey.String(uuid.New().String())
 	}
-   hostName:=os.Getenv("MY_POD_NAME")
-   hostIp:=os.Getenv("MY_POD_IP")
-   resourceType:=os.Getenv("RESOURCE_TYPE")
    return resource.New(
       context.Background(),
       resource.WithAttributes(
          instID,
          semconv.ServiceNameKey.String(serviceName),
-         semconv.HostNameKey.String(hostName),
-         label.String("service.namespace",serviceNameSpace),
-         label.String("ip",hostIp),
-         label.String("resource.type",resourceType),
+         attribute.String("service.namespace",serviceNameSpace),
+
       ),
    )
 }
 
-func spanExporter() (exporttrace.SpanExporter, error) {
+func spanExporter() (sdktrace.SpanExporter, error) {
 
-    var user = os.Getenv("JAEGER_USER")
-    var password = os.Getenv("JAEGER_PASSWORD")
 	export_type := os.Getenv("EXPORT_TYPE")
-	if export_type == ""{
+	if export_type==""{
 		export_type="OTLP"
 	}
+
 	if export_type == "JAEGER" {
-		log.Info("exporting with JAEGER logger")
-		addr1 := os.Getenv("JAEGER_ENDPOINT")
-		return jaeger.NewRawExporter(
-			jaeger.WithCollectorEndpoint(addr1,jaeger.WithUsername(user),jaeger.WithPassword(password)),
-			jaeger.WithProcess(jaeger.Process{
-				ServiceName: serviceName,
-			}),
-		)
-	}
+	addr1 := os.Getenv("JAEGER_ENDPOINT");
+	log.Info("exporting with JAEGER logger")
+	return jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(addr1)))
+	 }
 	if export_type == "OTLP" {
-		log.Info("exporting with OTLP logger")
+		otlp_protocol := os.Getenv("OTLP_FORMAT")
 		if os.Getenv("OTLP_ENDPOINT") != "" {
 			addr := os.Getenv("OTLP_ENDPOINT")
-			return otlp.NewExporter(
-				context.Background(),
-				otlp.WithInsecure(),
-				otlp.WithAddress(addr),
-			)
+			u, err := url.Parse(addr)
+				if err != nil {
+					panic(err)
+				}
+			log.Info("Scheme: "+u.Scheme+" "+" Host: "+u.Host+" Path: "+u.Path)
+			log.Info(u.User)
+			if otlp_protocol == "HTTP"{
+			log.Info("exporting with OTLP HTTP ")
+
+				if u.Scheme == "https" {
+					return otlptracehttp.New(
+					context.Background(),
+					otlptracehttp.WithEndpoint(u.Host),
+					otlptracehttp.WithURLPath(u.Path),
+					)
+				} else {
+					return otlptracehttp.New(
+					context.Background(),
+					otlptracehttp.WithInsecure(),
+					otlptracehttp.WithEndpoint(u.Host),
+					otlptracehttp.WithURLPath(u.Path),
+					)
+				}
+			}else {
+			log.Info("exporting with OTLP GRPC ")
+
+				if u.Scheme == "https" {
+					return otlptracegrpc.New(
+					context.Background(),
+					otlptracegrpc.WithEndpoint(u.Host),
+					)
+				} else {
+					return otlptracegrpc.New(
+					context.Background(),
+					otlptracegrpc.WithInsecure(),
+					otlptracegrpc.WithEndpoint(u.Host),
+					)
+				}
+
+			}
+			
 		}
 	}
-
 	log.Info("exporting with STDOUT logger")
-	return stdout.NewExporter(
-		stdout.WithPrettyPrint(),
-		stdout.WithWriter(log.Writer()),
+	return stdouttrace.New(
+		stdouttrace.WithPrettyPrint(),
+		stdouttrace.WithWriter(log.Writer()),
 	)
 }
 func initTracing() {
@@ -162,21 +187,13 @@ func initTracing() {
 	}
 
 	log.Info("tracing enabled")
-	otel.SetTracerProvider(
-		trace.NewTracerProvider(
-			trace.WithConfig(
-				trace.Config{
-					DefaultSampler: trace.AlwaysSample(),
-					Resource:       res,
-				},
-			),
-			trace.WithSpanProcessor(
-				trace.NewBatchSpanProcessor(exp),
-			),
-		),
+	otel.SetTracerProvider(sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithResource(res),
+		sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(exp)),
+	),
 	)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
-}
+	otel.SetTextMapPropagator(propagation.TraceContext{})}
 
 type errorHandler struct {
 	log *logrus.Logger

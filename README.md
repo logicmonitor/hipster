@@ -55,10 +55,18 @@ This doc explains how to build and run the Hipstershop source code locally.
 3. Open the terminal and go to hipster folder. Execute following command.
   
      ```sh
-     
+    export OTLP_FORMAT="OTLP_FORMAT" // values can be HTTP or GRPC
+    export SERVICE_NAMESPACE="SERVICE_NAMESPACE"
+    export OTLP_ENDPOINT="YOUR_ENDPOINT" //need to append /v1/traces for OTLP HTTP format
+    export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Beaerer YOUR_BAERER_TOKEN" //Required for otlp http format if sending traces directly to LM platform
+    export OTEL_RESOURCE_ATTRIBUTES="KEYVALUEPAIR"  // values to be comma seperated eg:"key1=value1,key2=value2"
     docker-compose up -d
      
       ```
+
+    For AdService exporter endpoint need to be set manually in docker-compose.yml file.
+    Opentelemetry java agent appends /v1/traces for OTLP HTTP format.
+    OTLP FORMAT values can be set either grpc of http/protobuf 
 
 4.  Access the web frontend through your browser 
   
@@ -114,7 +122,6 @@ Once all four steps are completed successfully,you can view the traces on Logicm
     export EXPORT_TYPE="OTLP"
     export SERVICE_NAME=LM-RECOMMENDATIONSERVICE
     export OTLP_ENDPOINT=http://localhost:55681/v1/traces
-    export OTLP_HEADERS=""
     export SERVICE_NAMESPACE=HIPSTER
     export PRODUCT_CATALOG_SERVICE_ADDR=localhost:4000
     opentelemetry-instrument python3 recommendation_server.py
@@ -153,7 +160,6 @@ Once all four steps are completed successfully,you can view the traces on Logicm
     export EXPORT_TYPE="OTLP"
     export SERVICE_NAME=LM-EMAILSERVICE
     export OTLP_ENDPOINT=http://localhost:55681/v1/traces
-    export OTLP_HEADERS=""
     export SERVICE_NAMESPACE=HIPSTER
     opentelemetry-instrument python3 email_server.py
     
@@ -169,10 +175,11 @@ Once all four steps are completed successfully,you can view the traces on Logicm
         -Dotel.resource.attributes=$OTEL_RESOURCE_ATTRIBUTES ,service.name=$SERVICE_NAME,host.name=$HOST_NAME \
         -Dotel.exporter.$EXPORTER.endpoint=http://localhost:4317 \
         -Dotel.exporter.otlp.insecure=true \
+        -Dotel.exporter.otlp.protocol=$OTLP_PROTOCOL \
         -jar hipstershop-0.1.0-SNAPSHOT-fat.jar
      
      
- > Note : Download opentelemetry-javaagent-all.jar : https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v0.8.0/opentelemetry-javaagent-all.jar and copy the jar file in folder adservice/tracinglib    
+ > Note : Download opentelemetry-javaagent-all.jar : https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v1.7.0/opentelemetry-javaagent-all.jar and copy the jar file in folder adservice/tracinglib    
 
  10.  Access the web frontend through your browser 
   
@@ -180,10 +187,13 @@ Once all four steps are completed successfully,you can view the traces on Logicm
   - Once all four steps are completed successfully,you can view the traces on Logicmonitor Traces page.
 
 Also, the following env variables are needed to be set explicitly for every service while running locally:
-    - SERVICE_NAME
-    - SERVICE_NAMESPACE
-    - OTLP_ENDPOINT
-    - EXPORT_TYPE
+  - SERVICE_NAME
+  - SERVICE_NAMESPACE
+  - OTLP_ENDPOINT
+  - OTLP_FORMAT
+  - EXPORT_TYPE
+  - OTEL_RESOURCE_ATTRIBUTES
+  - OTEL_EXPORTER_OTLP_HEADERS
 
     
 

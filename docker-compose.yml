@@ -15,11 +15,14 @@ services:
       - SHIPPING_SERVICE_ADDR=shipping:5551
       - AD_SERVICE_ADDR=ad:9555
       - PORT=8081
-      - OTLP_ENDPOINT=host.docker.internal:4317
+      - OTLP_FORMAT=$OTLP_FORMAT
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
       - EXPORT_TYPE=OTLP
       - SERVICE_NAME=FRONTENDSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP"
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+
     depends_on:
       - currency
       - cart
@@ -32,11 +35,15 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - OTLP_ENDPOINT=http://host.docker.internal:4317
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
       - EXPORT_TYPE=OTLP
       - SERVICE_NAME=CARTSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP"
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTLP_FORMAT=$OTLP_FORMAT
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+
+
   currency:
     build: ./currencyservice
     ports:
@@ -45,11 +52,14 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       - PORT=9001
-      - OTLP_ENDPOINT=http://host.docker.internal:4317
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
       - EXPORT_TYPE=OTLP
       - SERVICE_NAME=CURENCYSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP"
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTLP_FORMAT=$OTLP_FORMAT
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
+
   recommended:
     build: ./recommendationservice
     ports:
@@ -58,16 +68,15 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       - PORT=8082
-      - OTLP_ENDPOINT=http://host.docker.internal:55681/v1/traces
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
       - EXPORT_TYPE=OTLP
-      - SERVICE_NAME=AD_RECOMMENDATIONSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
+      - SERVICE_NAME=RECOMMENDATIONSERVICE
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
       - PRODUCT_CATALOG_SERVICE_ADDR=productcatlog:4000
-      - OTLP_FORMAT="HTTP"   
-      - USER=""
-      - PASSWORD=""
-      - OTEL_EXPORTER_OTLP_HEADERS={"Authorization":"Bearer bearer_token"}
-      - OTLP_HEADERS={"Authorization":"Bearer bearer_token"}
+      - OTLP_FORMAT=$OTLP_FORMAT   
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+
     depends_on:
       - cart
       - currency
@@ -79,11 +88,14 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       - PORT=4000
-      - OTLP_ENDPOINT=host.docker.internal:4317
+      - OTLP_FORMAT=$OTLP_FORMAT
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
       - EXPORT_TYPE=OTLP
       - SERVICE_NAME=PRODUCTCATLOGSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP"     
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+
     depends_on:
       - cart
       - recommended
@@ -104,11 +116,14 @@ services:
       - PAYMENT_SERVICE_ADDR=payment:8011
       - AD_SERVICE_ADDR=ad:9555
       - PORT=5050
-      - OTLP_ENDPOINT=host.docker.internal:4317
+      - OTLP_FORMAT=$OTLP_FORMAT
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
       - EXPORT_TYPE=OTLP
       - SERVICE_NAME=CHECKOUTSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP"     
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+
     depends_on:
       - frontend
       - cart
@@ -121,11 +136,13 @@ services:
       - 8011:8011
     environment:
       - PORT=8011
-      - OTLP_ENDPOINT=http://host.docker.internal:4317
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
       - EXPORT_TYPE=OTLP
       - SERVICE_NAME=PAYMENTSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP" 
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTLP_FORMAT=$OTLP_FORMAT
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
     depends_on:
       - checkout
       - currency
@@ -137,11 +154,14 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       - PORT=5551
-      - OTLP_ENDPOINT=host.docker.internal:4317
+      - OTLP_FORMAT=$OTLP_FORMAT
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
       - EXPORT_TYPE=OTLP
       - SERVICE_NAME=SHIPPINGSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP"    
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+
     depends_on:
       - frontend
       - cart
@@ -154,11 +174,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - OTLP_ENDPOINT=host.docker.internal:4317
-      - EXPORTER="otlp"
+      - EXPORTER_ENDPOINT=https://lmadityabhairavkar.logicmonitor.com/rest/api
+      - EXPORT_TYPE=otlp
       - SERVICE_NAME=ADSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP" 
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
+      - OTLP_PROTOCOL=http/protobuf
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+
     depends_on:
       - checkout
   email:
@@ -170,13 +193,14 @@ services:
     depends_on:
       - checkout
     environment:
-      - OTLP_ENDPOINT=http://host.docker.internal:55681/v1/traces
-      - EXPORTER="otlp"
+      - OTLP_ENDPOINT=$OTLP_ENDPOINT
       - EXPORT_TYPE=OTLP
-      - SERVICE_NAME=AD_EMAILSERVICE
-      - SERVICE_NAMESPACE=LM_HIPSTER
-      - OTLP_FORMAT="HTTP"
+      - SERVICE_NAME=EMAILSERVICE
+      - SERVICE_NAMESPACE=$SERVICE_NAMESPACE
+      - OTLP_FORMAT=$OTLP_FORMAT
       - USER=""
       - PASSWORD="" 
-      - OTEL_EXPORTER_OTLP_HEADERS={"Authorization":"Bearer bearer_token"}
-      - OTLP_HEADERS={"Authorization":"Bearer bearer_token"}
+      - OTEL_EXPORTER_OTLP_HEADERS=$OTEL_EXPORTER_OTLP_HEADERS
+      - OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES
+
+
