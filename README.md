@@ -66,7 +66,7 @@ This doc explains how to build and run the Hipstershop source code locally.
 
     For AdService exporter endpoint need to be set manually in docker-compose.yml file.
     Opentelemetry java agent appends /v1/traces for OTLP HTTP format.
-    OTLP FORMAT values can be set either grpc of http/protobuf 
+    OTLP_PROTOCOL values can be set either grpc of http/protobuf 
 
 4.  Access the web frontend through your browser 
   
