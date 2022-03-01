@@ -61,15 +61,7 @@ namespace cartservice
             var exportType = Environment.GetEnvironmentVariable("EXPORT_TYPE") ?? "OTLP";
             var serviceName = Environment.GetEnvironmentVariable("SERVICE_NAME") ?? "CARTSERVICE" + (exportType == "O" ? string.Empty : $"-{exportType}");
             var myList = new List<KeyValuePair<string, object>>();
-            var pod_ip = Environment.GetEnvironmentVariable("MY_POD_IP") ?? "0.0.0.0";
-            var hostname = Environment.GetEnvironmentVariable("HOST_NAME") ?? "DEFAULT_NAME";
-            var resource_type = Environment.GetEnvironmentVariable("RESOURCE_TYPE") ?? "DEFAULT_RESOURCE";
-            myList.Add(new KeyValuePair<string, object>("host.name",hostname));
-            myList.Add(new KeyValuePair<string, object>("resource.type", resource_type));
-            myList.Add(new KeyValuePair<string, object>("ip",pod_ip ));
             string attributes = Environment.GetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES") ?? null;
-            string headers= Environment.GetEnvironmentVariable("OTLP_HEADERS") ?? null;
-
             if (attributes != null)
             {
                 try
@@ -85,32 +77,26 @@ namespace cartservice
                     Console.WriteLine("Error" + e);
                 }
             }
-            string servicename = Environment.GetEnvironmentVariable("SERVICE_NAMESPACE") ?? "DotnetService";
+            string servicenamespace = Environment.GetEnvironmentVariable("SERVICE_NAMESPACE") ?? "DotnetService";
             string otlp_format = Environment.GetEnvironmentVariable("OTLP_FORMAT") ?? "HTTP";
-            builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName, servicename, null, false, $"{serviceName}-{exportType}-{Guid.NewGuid().ToString()}").AddAttributes(myList));
+            builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName, servicenamespace, null, false, $"{serviceName}-{exportType}-{Guid.NewGuid().ToString()}").AddAttributes(myList));
             switch (exportType)
             {
                 case "OTLP":
                     AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
                     var otlpEndpoint = Environment.GetEnvironmentVariable("OTLP_ENDPOINT") ?? " http://localhost:4317";
+                    Console.WriteLine("OTLP EXPORTER Endpoint " + otlpEndpoint+" "+otlp_format+" "+" "+servicenamespace);
+
                     builder.AddConsoleExporter();
                     builder.AddOtlpExporter(otlpOptions =>
                     {
                         otlpOptions.Endpoint = new Uri(otlpEndpoint);
-
-
                         //otlpOptions.Endpoint = new Uri(otlpEndpoint);
                         if (otlp_format == "HTTP")
                         {
                             otlpOptions.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
-                            if(headers!=null){
-                            otlpOptions.Headers = headers;
-                            Console.WriteLine("Headers"+headers);
-                            }
-                            Console.WriteLine("OTLP EXPORTER Endpoint " + otlpEndpoint+" "+serviceName);
-
                         }
-                        else
+                        else if(otlp_format == "GRPC")
                         {
                             otlpOptions.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
                         }

@@ -34,7 +34,8 @@ from opentelemetry import trace
 from opentelemetry.exporter import jaeger
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as HTTPEXPORTER
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter as GRPCEXPORTER
 import json
 #gRPC OTEL
 from opentelemetry.sdk.resources import Resource
@@ -44,10 +45,11 @@ from logger import getJSONLogger
 logger = getJSONLogger('emailservice-server')
 
 export_type = os.environ["EXPORT_TYPE"]
-serviceName = os.environ['SERVICE_NAME']
-if serviceName=="":
+serviceName="DEFAULT_NAME"
+try:
+    serviceName=os.environ['SERVICE_NAME']
+except:
     serviceName = "email-service"
-
 
 if export_type == "JAEGER" :
     logger.info("JAEGER SET")
@@ -67,22 +69,55 @@ if export_type == "JAEGER" :
         password=jaeger_password, # optional
     )
     span_processor = BatchSpanProcessor(jaeger_exporter)
-else:
-    otlp_endpoint= os.environ["OTLP_ENDPOINT"]
-    otlp_header = os.environ['OTLP_HEADERS']
-    if otlp_header != "" :
-        otlp_exporter = OTLPSpanExporter(endpoint=otlp_endpoint , headers=json.loads(otlp_header))
+
+if export_type == 'OTLP':
+    otlp_endpoint= os.environ['OTLP_ENDPOINT']
+    otlp_format=os.environ['OTLP_FORMAT']
+    attributes={}
+    try:
+        resource_attributes = os.environ['OTEL_RESOURCE_ATTRIBUTES']
+        resource_attributes = resource_attributes.split(",")
+        for attribute in resource_attributes:
+            keyvalue= attribute.split("=")
+            attributes[keyvalue[0]]=keyvalue[1]
+    except:
+        logger.debug("OTEL RESOURCE ATTRIBURTES NOT SET") 
+    try:
+        attributes["service.namespace"]=os.environ['SERVICE_NAMESPACE']
+    except:
+        attributes["service.namespace"]="DEFAULT_NAMESPACE"
+    attributes["service.name"]=serviceName
+    resource = Resource(attributes)
+    if otlp_format == "HTTP":
+        otlp_headers="{}"
+        try :
+            otlp_header = os.environ['OTEL_EXPORTER_OTLP_HEADERS']
+            headers= otlp_header.split(",")
+            if len(headers) > 0 :
+                otlp_headers=""
+                otlp_headers+="{"
+                for header in headers :
+                    keyvalue= header.split("=")
+                    if len(keyvalue)==2:
+                        otlp_headers+="\""+keyvalue[0]+"\""
+                        otlp_headers+=":"
+                        otlp_headers+="\""+keyvalue[1]+"\""
+                    otlp_headers+=","
+                otlp_headers=otlp_headers[:-1]
+                otlp_headers+="}"
+                logger.info(otlp_headers)
+        except Exception as e:
+            logger.info("OTLP HEADERS NOT SET"+ str(e)) 
+        otlp_exporter = HTTPEXPORTER(endpoint=otlp_endpoint , headers=json.loads(otlp_headers))
+        span_processor = BatchSpanProcessor(otlp_exporter)
+        trace.set_tracer_provider(TracerProvider(resource=resource))
+        trace.get_tracer_provider().add_span_processor(span_processor)
     else :
-        otlp_exporter = OTLPSpanExporter(endpoint=otlp_endpoint)
-    span_processor = BatchSpanProcessor(otlp_exporter)
+        otlp_exporter = GRPCEXPORTER(endpoint=otlp_endpoint)
+        span_processor = BatchSpanProcessor(otlp_exporter)
+        trace.set_tracer_provider(TracerProvider(resource=resource))
+        trace.get_tracer_provider().add_span_processor(span_processor)
 
-resource = Resource(attributes={
-    "service.name": serviceName,
-    "service.namespace": os.environ['SERVICE_NAMESPACE']
-
-})
-trace.set_tracer_provider(TracerProvider(resource=resource))
-trace.get_tracer_provider().add_span_processor(span_processor)
 grpc_server_instrumentor = GrpcInstrumentorServer()
 grpc_server_instrumentor.instrument()
 # Create a BatchExportSpanProcessor and add the exporter to it
