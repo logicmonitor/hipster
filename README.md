@@ -15,17 +15,17 @@ The following table represents functionality of each microservice.
 
 | Service                                              | Language      | Description                                                                                                                       |
 | ---------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| [frontend](./src/frontend)                           | Go            | Exposes an HTTP server to serve the website. Does not require signup/login and generates session IDs for all users automatically. |
-| [cartservice](./src/cartservice)                     | C#            | Stores the items in the user's shopping cart in Redis and retrieves it.                                                           |
-| [productcatalogservice](./src/productcatalogservice) | Go            | Provides the list of products from a JSON file and ability to search products and get individual products.                        |
-| [currencyservice](./src/currencyservice)             | Node.js       | Converts one money amount to another currency. Uses real values fetched from European Central Bank. It's the highest QPS service. |
-| [paymentservice](./src/paymentservice)               | Node.js       | Charges the given credit card info (mock) with the given amount and returns a transaction ID.                                     |
-| [shippingservice](./src/shippingservice)             | Go            | Gives shipping cost estimates based on the shopping cart. Ships items to the given address (mock)                                 |
-| [emailservice](./src/emailservice)                   | Python        | Sends users an order confirmation email (mock).                                                                                   |
-| [checkoutservice](./src/checkoutservice)             | Go            | Retrieves user cart, prepares order and orchestrates the payment, shipping and the email notification.                            |
-| [recommendationservice](./src/recommendationservice) | Python        | Recommends other products based on what's given in the cart.                                                                      |
-| [adservice](./src/adservice)                         | Java          | Provides text ads based on given context words.                                                                                   |
-| [loadgenerator](./src/loadgenerator)                 | Python/Locust | Continuously sends requests imitating realistic user shopping flows to the frontend.                                              |
+| [frontend](./frontend)                           | Go            | Exposes an HTTP server to serve the website. Does not require signup/login and generates session IDs for all users automatically. |
+| [cartservice](./cartservice)                     | C#            | Stores the items in the user's shopping cart in Redis and retrieves it.                                                           |
+| [productcatalogservice](./productcatalogservice) | Go            | Provides the list of products from a JSON file and ability to search products and get individual products.                        |
+| [currencyservice](./currencyservice)             | Node.js       | Converts one money amount to another currency. Uses real values fetched from European Central Bank. It's the highest QPS service. |
+| [paymentservice](./paymentservice)               | Node.js       | Charges the given credit card info (mock) with the given amount and returns a transaction ID.                                     |
+| [shippingservice](./shippingservice)             | Go            | Gives shipping cost estimates based on the shopping cart. Ships items to the given address (mock)                                 |
+| [emailservice](./emailservice)                   | Python        | Sends users an order confirmation email (mock).                                                                                   |
+| [checkoutservice](./checkoutservice)             | Go            | Retrieves user cart, prepares order and orchestrates the payment, shipping and the email notification.                            |
+| [recommendationservice](./recommendationservice) | Python        | Recommends other products based on what's given in the cart.                                                                      |
+| [adservice](./adservice)                         | Java          | Provides text ads based on given context words.                                                                                   |
+| [loadgenerator](./loadgenerator)                 | Python/Locust | Continuously sends requests imitating realistic user shopping flows to the frontend.                                              |
 
 
 ## Development Guide 
@@ -73,6 +73,20 @@ This doc explains how to build and run the Hipstershop source code locally.
   - Once run above all steps you can access frontend service at  http://localhost:8081
   
 Once all four steps are completed successfully,you can view the traces on Logicmonitor Traces page.
+
+# When to use OTLP/HTTP or OTLP/gRPC
+
+ - **OTLP/gRPC**
+    -  OTLP/gRPC is preffered when sending data via collector.
+    -  This protocol is concerned with reliability of delivery between one pair of client/server nodes and aims to ensure that no data is lost   in-transit between the client and the server. Many telemetry collection systems have intermediary nodes that the data must travel across until reaching the final destination (e.g. application -> agent -> collector -> backend)
+    - eg: http://localhost:4317
+ - **OTLP/HTTP**
+    -  OTLP/HTTP is preferred while sending data directly to platform using url without sending it to collector.
+    -  OTLP/HTTP uses Protobuf payloads encoded either in binary format or in JSON format.
+    -  OTLP/HTTP uses HTTP POST requests to send telemetry data from clients to servers.
+    -  eg: https://qauattraces01.logicmonitor.com/rest/api/v1/traces
+
+For more information, visit [OpenTelemetry Protocol Specification.](https://opentelemetry.io/docs/reference/specification/protocol/otlp/)
 
 ## Steps to run on Local Machine
 
