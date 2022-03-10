@@ -1,4 +1,4 @@
-# HipstersShop
+# HipsterShop
 Hipster Shop is a cloud-native microservices demo application .Google uses this application to demonstrate use of technologies like Kubernetes/GKE, Istio, Stackdriver, gRPC and OpenCensus.
 This application works on any Kubernetes cluster, as well as Google Kubernetes Engine. It’s easy to deploy with little to no configuration.
 
@@ -58,7 +58,7 @@ This doc explains how to build and run the Hipstershop source code locally.
     export OTLP_FORMAT="OTLP_FORMAT" // values can be HTTP or GRPC
     export SERVICE_NAMESPACE="SERVICE_NAMESPACE"
     export OTLP_ENDPOINT="YOUR_ENDPOINT" //need to append /v1/traces for OTLP HTTP format
-    export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Beaerer YOUR_BAERER_TOKEN" //Required for otlp http format if sending traces directly to LM platform
+    export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Beaerer YOUR_BEARER_TOKEN" //Required for otlp http format if sending traces directly to LM platform
     export OTEL_RESOURCE_ATTRIBUTES="KEYVALUEPAIR"  // values to be comma seperated eg:"key1=value1,key2=value2"
     docker-compose up -d
      
@@ -77,8 +77,8 @@ Once all four steps are completed successfully,you can view the traces on Logicm
 # When to use OTLP/HTTP or OTLP/gRPC
 
  - **OTLP/gRPC**
-    -  OTLP/gRPC is preffered when sending data via collector.
-    -  This protocol is concerned with reliability of delivery between one pair of client/server nodes and aims to ensure that no data is lost   in-transit between the client and the server. Many telemetry collection systems have intermediary nodes that the data must travel across until reaching the final destination (e.g. application -> agent -> collector -> backend)
+    -  OTLP/gRPC is preferred when sending data via collector.
+    -  This protocol is concerned with reliability of delivery between one pair of client/server nodes and aims to ensure that no data is lost in-transit between the client and the server. Many telemetry collection systems have intermediary nodes that the data must travel across until reaching the final destination (e.g. application -> agent -> collector -> backend)
     - eg: http://localhost:4317
  - **OTLP/HTTP**
     -  OTLP/HTTP is preferred while sending data directly to platform using url without sending it to collector.
@@ -119,7 +119,7 @@ For more information, visit [OpenTelemetry Protocol Specification.](https://open
     
     ```
   
-3. Payment Service(Node.js)
+3. Payment Service (Node.js)
   
     ```sh
     cd paymentservice
@@ -142,7 +142,7 @@ For more information, visit [OpenTelemetry Protocol Specification.](https://open
     
     ```
     
-5. Shipping Service(Go)
+5. Shipping Service (Go)
   
     ```sh
     cd shippingservice
