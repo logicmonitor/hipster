@@ -58,7 +58,7 @@ This doc explains how to build and run the Hipstershop source code locally.
     export OTLP_FORMAT="OTLP_FORMAT" // values can be HTTP or GRPC
     export SERVICE_NAMESPACE="SERVICE_NAMESPACE"
     export OTLP_ENDPOINT="YOUR_ENDPOINT" //need to append /v1/traces for OTLP HTTP format
-    export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Beaerer YOUR_BEARER_TOKEN" //Required for otlp http format if sending traces directly to LM platform
+    export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer YOUR_BEARER_TOKEN" //Required for otlp http format if sending traces directly to LM platform
     export OTEL_RESOURCE_ATTRIBUTES="KEYVALUEPAIR"  // values to be comma seperated eg:"key1=value1,key2=value2"
     docker-compose up -d
      
